@@ -1,6 +1,5 @@
 /*
 › Create By @Sendi
-› Base Ori @DikaArdnt
 › Kalau mau ubah/edit owner di settings.js
 › Edit text menu di file language › help.js
 */
@@ -20,7 +19,9 @@ const speed = require('performance-now')
 const { performance } = require('perf_hooks')
 const { Primbon } = require('scrape-primbon')
 const primbon = new Primbon()
+const yts = require('yt-search');
 const riy = require('xfarr-api')
+const { yta, ytv, ytvd, ytvf, servers } = require('./lib/y2mate')
 const { smsg, formatp, tanggal, formatDate, getTime, isUrl, sleep, clockString, runtime, fetchJson, getBuffer, jsonformat, format, parseMention, getRandom } = require('./lib/myfunc')
 const { FajarNews, BBCNews, metroNews, CNNNews, iNews, KumparanNews, TribunNews, DailyNews, DetikNews, OkezoneNews, CNBCNews, KompasNews, SindoNews, TempoNews, IndozoneNews, AntaraNews, RepublikaNews, VivaNews, KontanNews, MerdekaNews, KomikuSearch, AniPlanetSearch, KomikFoxSearch, KomikStationSearch, MangakuSearch, KiryuuSearch, KissMangaSearch, KlikMangaSearch, PalingMurah, LayarKaca21, AminoApps, Mangatoon, WAModsSearch, Emojis, CoronaInfo, JalanTikusMeme,  Cerpen, Quotes, Couples, Darkjokes } = require("dhn-api");
 
@@ -33,6 +34,8 @@ let _family100 = db.data.game.family100 = []
 let kuismath = db.data.game.math = []
 let tebakgambar = db.data.game.tebakgambar = []
 let tebakkata = db.data.game.tebakkata = []
+let tebakbendera = db.data.game.tebakbendera = []
+let tebakkabupaten = db.data.game.tebakkabupaten = []
 let caklontong = db.data.game.lontong = []
 let caklontong_desk = db.data.game.lontong_desk = []
 let tebakkalimat = db.data.game.kalimat = []
@@ -61,12 +64,14 @@ module.exports = chika = async (chika, m, chatUpdate, store) => {
         const pushname = m.pushName || "No Name"
         const botNumber = await chika.decodeJid(chika.user.id)
         const isCreator = [botNumber, ...global.owner].map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
+        const isPrem = [botNumber, ...global.prem].map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
         const itsMe = m.sender == botNumber ? true : false
         const text = q = args.join(" ")
         const quoted = m.quoted ? m.quoted : m
         const mime = (quoted.msg || quoted).mimetype || ''
 	    const isMedia = /image|video|sticker|audio/.test(mime)
 	    const from = mek.key.remoteJid
+	    const qmsg = (quoted.msg || quoted)
 	
         // Time & Date
         const time = moment(Date.now()).tz('Asia/Jakarta').locale('id').format('HH:mm:ss z')
@@ -156,18 +161,6 @@ module.exports = chika = async (chika, m, chatUpdate, store) => {
             chika.sendReadReceipt(m.chat, m.sender, [m.key.id])
             console.log(chalk.black(chalk.bgWhite('[ PESAN ]')), chalk.black(chalk.bgGreen(new Date)), chalk.black(chalk.bgBlue(budy || m.mtype)) + '\n' + chalk.magenta('=> Dari'), chalk.green(pushname), chalk.yellow(m.sender) + '\n' + chalk.blueBright('=> Di'), chalk.green(m.isGroup ? pushname : 'Private Chat', m.chat))
         }
-	
-	// reset limit every 12 hours
-        let cron = require('node-cron')
-        cron.schedule('00 12 * * *', () => {
-            let user = Object.keys(global.db.data.users)
-            let limitUser = isPremium ? global.limitawal.premium : global.limitawal.free
-            for (let jid of user) global.db.data.users[jid].limit = limitUser
-            console.log('Reseted Limit')
-        }, {
-            scheduled: true,
-            timezone: "Asia/Jakarta"
-        })
         
 	// auto set bio
 	if (db.data.settings[botNumber].autobio) {
@@ -266,6 +259,24 @@ ${Array.from(room.jawaban, (jawaban, index) => {
                 await chika.sendButtonText(m.chat, [{ buttonId: 'tebak gambar', buttonText: { displayText: 'Tebak Gambar' }, type: 1 }], `🎮 Tebak Gambar 🎮\n\nJawaban Benar 🎉\n\nIngin bermain lagi? tekan button dibawah`, ownername, m)
                 delete tebakgambar[m.sender.split('@')[0]]
             } else reply('*Jawaban Salah!*')
+        }
+
+        if (tebakkabupaten.hasOwnProperty(m.sender.split('@')[0]) && isCmd) {
+            kuis = true
+            jawaban = tebakkabupaten[m.sender.split('@')[0]]
+            if (budy.toLowerCase() == jawaban) {
+                await chika.sendButtonText(m.chat, [{ buttonId: 'tebakkabupaten', buttonText: { displayText: 'Tebak Kabupaten' }, type: 1 }] `🎮 Tebak Kabupaten 🎮\n\nJawaban Benar 🎉\n\nIngin bermain lagi? tekan button dibawah`, ownername, m)
+                delete tebakkabupaten[m.sender.split('@')[0]]
+            } else reply('*Jawaban Salah!*')
+        }
+
+        if (tebakbendera.hasOwnProperty(m.sender.split('@')[0]) && isCmd) {
+            kuis = true
+            jawaban = tebakbendera[m.sender.split('@')[0]]
+            if (budy.toLowerCase() == jawaban) {
+                await chika.sendButtonText(m.chat, [{ buttonId: 'tebakbendera', buttonText: { displayText: 'Tebak Bendera' }, type: 1 }], `🎮 Tebak Bendera 🎮\n\nJawaban Benar 🎉\n\nIngin bermain lagi? tekan button dibawah`, ownername, m)
+                delete tebakbendera[m.sender.split('@')[0]]
+             } else reply('Jawaban Salah!')
         }
 
         if (tebakkata.hasOwnProperty(m.sender.split('@')[0]) && isCmd) {
@@ -484,9 +495,7 @@ Selama ${clockString(new Date - user.afkTime)}
                 reply(`${m.pushName} Telah Afk${text ? ': ' + text : ''}`)
             }
             break	
-        case 'ttc': case 'ttt': case 'tictactoe': {
-        	 if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		   db.data.users[m.sender].limit -= 1 // -1 limit
+        case 'tictactoe': {
             let TicTacToe = require("./lib/tictactoe")
             this.game = this.game ? this.game : {}
             if (Object.values(this.game).find(room => room.id.startsWith('tictactoe') && [room.game.playerX, room.game.playerO].includes(m.sender))) throw 'Kamu masih didalam game'
@@ -551,8 +560,6 @@ Ketik *nyerah* untuk menyerah dan mengakui kekalahan`
             }
             break
             case 'suitpvp': case 'suit': {
-             if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		    db.data.users[m.sender].limit -= 1 // -1 limit
             this.suit = this.suit ? this.suit : {}
             let poin = 10
             let poin_lose = 10
@@ -580,6 +587,21 @@ Silahkan @${m.mentionedJid[0].split`@`[0]} untuk ketik terima/tolak`
             }
             }
             break
+            case 'whois': {
+                if (!m.quoted) return reply(lang.LockCmd())
+                let msg = await m.getQuotedObj()
+                if (!m.quoted.isBaileys) return reply(lang.NoMsgBot())
+                let teks = ''
+                for (let i of msg.userReceipt) {
+                    let read = i.readTimestamp
+                    let unread = i.receiptTimestamp
+                    let waktu = read ? read : unread
+                    teks += `⭔ @${i.userJid.split('@')[0]}\n`
+                    teks += ` ┗━⭔ *Waktu :* ${moment(waktu * 1000).format('DD/MM/YY HH:mm:ss')} ⭔ *Status :* ${read ? 'Dibaca' : 'Terkirim'}\n\n`
+                }
+                chika.sendTextWithMentions(m.chat, teks, m)
+            }
+            break 
             case 'chat': {
                 if (!isCreator) return reply(mess.owner)
                 if (!q) throw 'Option : 1. mute\n2. unmute\n3. archive\n4. unarchive\n5. read\n6. unread\n7. delete'
@@ -601,8 +623,6 @@ Silahkan @${m.mentionedJid[0].split`@`[0]} untuk ketik terima/tolak`
             }
             break
 	    case 'family100': {
-		 if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		db.data.users[m.sender].limit -= 1 // -1 limit
                 if ('family100'+m.chat in _family100) {
                     reply('Masih Ada Sesi Yang Belum Diselesaikan!')
                     throw false
@@ -626,8 +646,6 @@ Silahkan @${m.mentionedJid[0].split`@`[0]} untuk ketik terima/tolak`
             reply(tex.replace(/[aiueo]/g, ter).replace(/[AIUEO]/g, ter.toUpperCase()))
             break
             case 'tebak': {
-            	 if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		        db.data.users[m.sender].limit -= 1 // -1 limit
                 if (!q) return reply(`Example : ${prefix + command} lagu\n\nOption : \n1. lagu\n2. gambar\n3. kata\n4. kalimat\n5. lirik\n6.lontong`)
                 if (args[0] === "lagu") {
                     if (tebaklagu.hasOwnProperty(m.sender.split('@')[0])) throw "Masih Ada Sesi Yang Belum Diselesaikan!"
@@ -693,7 +711,33 @@ Silahkan @${m.mentionedJid[0].split`@`[0]} untuk ketik terima/tolak`
                     if (tebaklirik.hasOwnProperty(m.sender.split('@')[0])) {
                     console.log("Jawaban: " + result.jawaban)
                     chika.sendButtonText(m.chat, [{ buttonId: 'tebak lirik', buttonText: { displayText: 'Tebak Lirik' }, type: 1 }], `Waktu Habis\nJawaban:  ${tebaklirik[m.sender.split('@')[0]]}\n\nIngin bermain? tekan button dibawah`, ownername, m)
-                    delete tebaklirik[m.sender.split('@')[0]]
+                    ltebaklirik[m.sender.split('@')[0]]
+                    }
+               } else if (args[0] === 'kabupaten') {
+                     if (tebakkabupaten.hasOwnProperty(m.sender.split('@')[0])) throw "Masih Ada Sesi Yang Belum Diselesaikan!"
+                     let anu = await fetchJson('https://raw.githubusercontent.com/BochilTeam/database/master/games/tebakkabupaten.json')
+                     let result = anu[Math.floor(Math.random() * anu.length)]
+                     chika.sendImage(m.chat, result.url, lang.TbKabupaten('60s'), m).then(() => {
+                     console.log("Jawaban: " + result.title)
+          tebakkabupaten[m.sender.split('@')[0]] = result.title.toLowerCase()
+                     })
+                    await sleep(60000)
+                    if (tebakkabupaten.hasOwnProperty(m.sender.split('@')[0])) {
+                    chika.sendButtonText(m.chat, [{ buttonId: 'tebakkabupaten', buttonText: { displayText: 'Tebak Kabupaten' }, type: 1 }],  `Waktu Habis\nJawaban:  ${tebakkabupaten[m.sender.split('@')[0]]}\n\nIngin bermain? tekan button dibawah`, ownername, m)
+                    delete tebakkabupaten[m.sender.split('@')[0]]
+                    }
+               } else if (args[0] === 'bendera') {
+                    if (tebakbendera.hasOwnProperty(m.sender.split('@')[0])) throw "Masih Ada Sesi Yang Belum Diselesaikan!"
+                    let anu = await fetchJson('https://raw.githubusercontent.com/BochilTeam/database/master/games/tebakbendera2.json')
+                    let result = anu[Math.floor(Math.random() * anu.length)]
+                    chika.sendMedia(m.chat, result.img, '', m, { caption: lang.TbBendera('60s') }).then(() => {
+                    console.log("Jawaban: " + result.name)
+           tebakbendera[m.sender.split('@')[0]] = result.name.toLowerCase()
+                    })
+                    await sleep(60000)
+                    if (tebakbendera.hasOwnProperty(m.sender.split('@')[0])) {
+                    chika.sendButtonText(m.chat, [{ buttonId: 'tebakbendera', buttonText: { displayText: 'Tebak Bendera' }, type: 1 }],  `Waktu Habis\nJawaban:  ${tebakbendera[m.sender.split('@')[0]]}\n\nIngin bermain? tekan button dibawah`, ownername, m)
+                    delete tebakbendera[m.sender.split('@')[0]]
                     }
                 } else if (args[0] === 'lontong') {
                     if (caklontong.hasOwnProperty(m.sender.split('@')[0])) throw "Masih Ada Sesi Yang Belum Diselesaikan!"
@@ -713,7 +757,7 @@ Silahkan @${m.mentionedJid[0].split`@`[0]} untuk ketik terima/tolak`
                 }
             }
             break
-            case 'kuismath': case 'math': {
+            case 'kuismath': {
                 if (kuismath.hasOwnProperty(m.sender.split('@')[0])) throw "Masih Ada Sesi Yang Belum Diselesaikan!"
                 let { genMath, modes } = require('./lib/math')
                 if (!q) return reply(`Mode: ${Object.keys(modes).join(' | ')}\nContoh penggunaan: ${prefix}math medium`)
@@ -781,36 +825,31 @@ chika.sendMessage(from, { text: `Pertanyaan : ${q}\nJawaban : ${ya}` }, { quoted
 
 					break
 case 'rate':
- 
+
 				if (!q) return reply(`Penggunaan ${command} text\n\nContoh : ${command} Gambar aku`)
 					const ra = ['5', '10', '15' ,'20', '25','30','35','40','45','50','55','60','65','70','75','80','85','90','100']
 					const te = ra[Math.floor(Math.random() * ra.length)]
 chika.sendMessage(from, { text: `Rate : ${q}\nJawaban : *${te}%*` }, { quoted: m })
 
 					break
-case 'gantengcek':
   case 'cekganteng':
-   
+  
 				if (!q) return reply(`Penggunaan ${command} Nama\n\nContoh : ${command} Riych`)
 					const gan = ['5', '10', '15' ,'20', '25','30','35','40','45','50','55','60','65','70','75','80','85','90','100']
 					const teng = gan[Math.floor(Math.random() * gan.length)]
 chika.sendMessage(from, { text: `Nama : ${q}\nJawaban : *${teng}%*` }, { quoted: m })
 
 					break
-case 'cantikcek':
   case 'cekcantik':
-   
+               
 				if (!q) return reply(`Penggunaan ${command} Nama\n\nContoh : ${command} Riych`)
 					const can = ['5', '10', '15' ,'20', '25','30','35','40','45','50','55','60','65','70','75','80','85','90','100']
 					const tik = can[Math.floor(Math.random() * can.length)]
 chika.sendMessage(from, { text: `Nama : ${q}\nJawaban : *${tik}%*` }, { quoted: m })
 
 					break
-case 'sangecek':
   case 'ceksange':
-    case 'gaycek':
       case 'cekgay':
-        case 'lesbicek':
           case 'ceklesbi':
 				if (!q) return reply(`Penggunaan ${command} Nama\n\nContoh : ${command} ${pushname}`)
 					const sangeh = ['5', '10', '15','20', '25','30','35','40','45','50','55','60','65','70','75','80','85','90','100']
@@ -831,7 +870,7 @@ case 'wangy':
              reply(awikwok)
               break
 case 'cekmati':
-              if (!q) return reply(`Invalid!\n\nYg mau di cek siapa kontol?`)
+              if (!q) return reply(`Invalid!\n\nYg mau di cek siapa?`)
               predea = await axios.get(`https://api.agify.io/?name=${q}`)
               reply(`Nama : ${predea.data.name}\n*Mati Pada Umur :* ${predea.data.age} Tahun.\n\n_Cepet Cepet Tobat Bro Soalnya Mati ga ada yang tau_`)
               break
@@ -918,6 +957,7 @@ case 'halah': case 'hilih': case 'huluh': case 'heleh': case 'holoh':
 		await chika.updateBlockStatus(users, 'unblock').then((res) => reply(jsonformat(res))).catch((err) => reply(jsonformat(err)))
 	}
 	break
+
 	    case 'setname': case 'setsubject': {
                 if (!m.isGroup) return reply(mess.group)
                 if (!isBotAdmins) return reply(mess.botAdmin)
@@ -976,8 +1016,6 @@ let teks = `══✪〘 *👥 Tag All* 〙✪══
             }
             break
 	    case 'style': case 'styletext': {
-	        if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		db.data.users[m.sender].limit -= 1 // -1 limit
 		let { styletext } = require('./lib/scraper')
 		if (!text) throw 'Masukkan Query text!'
                 let anu = await styletext(text)
@@ -1185,7 +1223,7 @@ break
 
             }
             }
-            break
+            break 
             case 'antilink': {
                 if (!m.isGroup) return reply(mess.group)
                 if (!isBotAdmins) return reply(mess.botAdmin)
@@ -1247,13 +1285,13 @@ break
             }
             break
             case 'delete': case 'del': {
-                if (!m.quoted) throw false
+                if (!m.quoted) throw 'reply pesan bot'
                 let { chat, fromMe, id, isBaileys } = m.quoted
                 if (!isBaileys) throw 'Pesan tersebut bukan dikirim oleh bot!'
                 chika.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: true, id: m.quoted.id, participant: m.quoted.sender } })
             }
             break
-            case 'bcgc': case 'bcgroup': {
+            case 'bcgc': {
                 if (!isCreator) return reply(mess.owner)
                 if (!q) return reply(`Text mana?\n\nExample : ${prefix + command} Riy ganteng`)
                 let getGroups = await chika.groupFetchAllParticipating()
@@ -1264,78 +1302,19 @@ break
                     await sleep(1500)
                     let btn = [{
                                 urlButton: {
-                                    displayText: 'YouTube Creator',
-                                    url: `${youtube}`
-                                }
-                            }, {
-                                urlButton: {
-                                    displayText: `Rest Api's`,
-                                    url: `${myweb}`
+                                    displayText: 'List Menu 📒',
+                                    url: `${menu}`
                                 }
                             }, {
                                 quickReplyButton: {
-                                    displayText: 'Donasi',
-                                    id: 'donasi'
-                                }
-                            }, {
-                                quickReplyButton: {
-                                    displayText: 'Menu',
-                                    id: 'menu'
+                                    displayText: 'Buy Premium 🌟',
+                                    id: 'roseprem'
                                 }
                             }]
                       let txt = `「 Broadcast Bot 」\n\n${text}`
                       chika.send5ButImg(i, txt, ownername, global.thumb, btn)
                     }
                 reply(`Sukses Mengirim Broadcast Ke ${anu.length} Group`)
-            }
-            break
-            case 'bc': case 'broadcast': case 'bcall': {
-                if (!isCreator) return reply(mess.owner)
-                if (!q) return reply(`Text mana?\n\nExample : ${prefix + command} fatih-san`)
-                let anu = await store.chats.all().map(v => v.id)
-                reply(`Mengirim Broadcast Ke ${anu.length} Chat\nWaktu Selesai ${anu.length * 1.5} detik`)
-		for (let yoi of anu) {
-		    await sleep(1500)
-		    let btn = [{
-                                urlButton: {
-                                    displayText: 'YouTube Creator',
-                                    url: `${youtube}`
-                                }
-                            }, {
-                                urlButton: {
-                                    displayText: `Rest Api's`,
-                                    url: `${myweb}`
-                                }
-                            }, {
-                                quickReplyButton: {
-                                    displayText: 'Donasi',
-                                    id: 'donasi'
-                                }
-                            }, {
-                                quickReplyButton: {
-                                    displayText: 'Menu',
-                                    id: 'menu'
-                                }
-                            }]
-                      let txt = `「 Broadcast Bot 」\n\n${text}`
-                      chika.send5ButImg(yoi, txt, ownername, global.thumb, btn)
-		}
-		reply('Sukses Broadcast')
-            }
-            break
-            case 'infochat': {
-                if (!m.quoted) reply('Reply Pesan')
-                let msg = await m.getQuotedObj()
-                if (!m.quoted.isBaileys) throw 'Pesan tersebut bukan dikirim oleh bot!'
-                let teks = ''
-                for (let i of msg.userReceipt) {
-                    let read = i.readTimestamp
-                    let unread = i.receiptTimestamp
-                    let waktu = read ? read : unread
-                    teks += `⭔ @${i.userJid.split('@')[0]}\n`
-                    teks += ` ┗━⭔ *Waktu :* ${moment(waktu * 1000).format('DD/MM/YY HH:mm:ss')} ⭔ *Status :* ${read ? 'Dibaca' : 'Terkirim'}\n\n`
-                }
-                chika.sendTextWithMentions(m.chat, teks, m)
             }
             break
             case 'q': case 'quoted': {
@@ -1346,6 +1325,7 @@ break
             }
 	    break
             case 'listpc': {
+            	  if (!isCreator) return reply(mess.owner)
                  let anu = await store.chats.all().filter(v => v.id.endsWith('.net')).map(v => v.id)
                  let teks = `⬣ *LIST PERSONAL CHAT*\n\nTotal Chat : ${anu.length} Chat\n\n`
                  for (let i of anu) {
@@ -1356,6 +1336,7 @@ break
              }
              break
                 case 'listgc': {
+                  if (!isCreator) return reply(mess.owner)
                  let anu = await store.chats.all().filter(v => v.id.endsWith('@g.us')).map(v => v.id)
                  let teks = `⬣ *LIST GROUP CHAT*\n\nTotal Group : ${anu.length} Group\n\n`
                  for (let i of anu) {
@@ -1365,13 +1346,16 @@ break
                  chika.sendTextWithMentions(m.chat, teks, m)
              }
              break
-             case 'listonline': case 'liston': {
+             case 'listonline': {
+             	   if (!isCreator) return reply(mess.owner)
                     let id = args && /\d+\-\d+@g.us/.test(args[0]) ? args[0] : m.chat
                     let online = [...Object.keys(store.presences[id]), botNumber]
                     chika.sendText(m.chat, 'List Online:\n\n' + online.map(v => '⭔ @' + v.replace(/@.+/, '')).join`\n`, m, { mentions: online })
              }
              break
-            case 'sticker': case 's': case 'stickergif': case 'sgif': {
+            case 'sticker': case 'stiker': case 'stickergif': case 'sgif': {
+            if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) 
+		    db.data.users[m.sender].limit -= 1 // -1 limit
             if (!quoted) throw `Balas Video/Image Dengan Caption ${prefix + command}`
             reply(mess.wait)
                     if (/image/.test(mime)) {
@@ -1379,7 +1363,7 @@ break
                 let encmedia = await chika.sendImageAsSticker(m.chat, media, m, { packname: global.packname, author: global.author })
                 await fs.unlinkSync(encmedia)
             } else if (/video/.test(mime)) {
-                if ((quoted.msg || quoted).seconds > 11) return reply('Maksimal 10 detik!')
+                if ((quoted.msg || quoted).seconds > 20) return reply('Maksimal 10 detik!')
                 let media = await quoted.download()
                 let encmedia = await chika.sendVideoAsSticker(m.chat, media, m, { packname: global.packname, author: global.author })
                 await fs.unlinkSync(encmedia)
@@ -1388,7 +1372,7 @@ break
                 }
             }
             break
-case 'smeme': case 'stickermeme': case 'stickmeme': {
+case 'smeme': {
 let { TelegraPh } = require('./lib/uploader')
 if (!text) return reply(`Kirim/Reply Foto Dengan Caption ${prefix + command} *teks*`)
 if (text.includes('|')) return reply(`Kirim/Reply Foto Dengan Caption ${prefix + command} *teks*`)
@@ -1401,6 +1385,25 @@ memek = await chika.sendImageAsSticker(m.chat, meme, m, { packname: global.packn
 await fs.unlinkSync(memek)
 }
 break
+case 'jadwalshalat':{
+	if (!text) return reply(lang.KisahNabi(prefix, command, 'Makassar'))
+	var asma = await fetchJson(api('alfa', '/api/islam/'+command, {daerah : q}, 'apikey'))
+	.then(async data =>{
+		let txt = '🕌 *Jadwal Shalat*\n\n'
+		txt += `🏠• *Daerah :* ${q}\n\n`
+		txt += `⏱️• *Date :* ${moment(new Date()).tz('Asia/Jakarta').locale('id').format('HH:mm:ss DD/MM/YYYY')}\n`
+		txt += `🌄• *Subuh :* ${data.result.today.Shubuh}\n`
+		txt += `☀️• *Zuhur :* ${data.result.today.Dzuhur}\n`
+		txt += `⛅• *Ashr :* ${data.result.today.Ashr}\n`
+		txt += `🌥️• *Magrib :* ${data.result.today.Maghrib}\n`
+		txt += `🌌• *Isya :* ${data.result.today.Isya}\n`
+		reply(txt)
+		})
+		.catch(e =>{
+reply(lang.err())
+})
+	}
+	break
 case 'gura':
 case 'gurastick':{
 var ano = await fetchJson('https://raw.githubusercontent.com/rashidsiregar28/data/main/gura')
@@ -1445,6 +1448,25 @@ break
             reply(eb)
         }
         break
+            case 'stickerwm': case 'swm': case 'stickergifwm': case 'sgifwm': {
+                let [teks1, teks2] = text.split`|`
+                if (!teks1) throw `Kirim/reply image/video dengan caption ${prefix + command} teks1|teks2`
+                if (!teks2) throw `Kirim/reply image/video dengan caption ${prefix + command} teks1|teks2`
+            	m.reply(mess.wait)
+                if (/image/.test(mime)) {
+                    let media = await chika.downloadMediaMessage(qmsg)
+                    let encmedia = await chika.sendImageAsSticker(m.chat, media, m, { packname: teks1, author: teks2 })
+                    await fs.unlinkSync(encmedia)
+                } else if (/video/.test(mime)) {
+                    if ((quoted.msg || quoted).seconds > 11) return m.reply('Maksimal 10 detik!')
+                    let media = await chika.downloadMediaMessage(qmsg)
+                    let encmedia = await chika.sendVideoAsSticker(m.chat, media, m, { packname: teks1, author: teks2 })
+                    await fs.unlinkSync(encmedia)
+                } else {
+                    throw `Kirim Gambar/Video Dengan Caption ${prefix + command}\nDurasi Video 1-9 Detik`
+                }
+            }
+           break
             case 'dbinary': {
             if (!m.quoted.text && !text) throw `Kirim/reply text dengan caption ${prefix + command}`
             let { dBinary } = require('./lib/binary')
@@ -1532,7 +1554,7 @@ break
             chika.sendMessage(m.chat, {document: audio, mimetype: 'audio/mpeg', fileName: `Convert By ${ownername}.mp3`}, { quoted : m })
             }
             break
-            case 'tovn': case 'toptt': {
+            case 'tovn': {
             if (!/video/.test(mime) && !/audio/.test(mime)) throw `Reply Video/Audio Yang Ingin DijaNamaCowon VN Dengan Caption ${prefix + command}`
             if (!quoted) throw `Reply Video/Audio Yang Ingin DijaNamaCowon VN Dengan Caption ${prefix + command}`
             reply(mess.wait)
@@ -1553,31 +1575,16 @@ break
                 await fs.unlinkSync(media)
             }
             break
-	        case 'tourl': {
-                reply(mess.wait)
-		        let { UploadFileUgu, webp2mp4File, TelegraPh } = require('./lib/uploader')
-                let media = await chika.downloadAndSaveMediaMessage(quoted)
-                if (/image/.test(mime)) {
-                    let anu = await TelegraPh(media)
-                    reply(util.format(anu))
-                } else if (!/image/.test(mime)) {
-                    let anu = await UploadFileUgu(media)
-                    reply(util.format(anu))
-                }
-                await fs.unlinkSync(media)
-            }
-            break
             case 'imagenobg': case 'removebg': case 'remove-bg': {
-	    if (!quoted) throw `Kirim/Reply Image Dengan Caption ${prefix + command}`
 	    if (!/image/.test(mime)) throw `Kirim/Reply Image Dengan Caption ${prefix + command}`
 	    if (/webp/.test(mime)) throw `Kirim/Reply Image Dengan Caption ${prefix + command}`
 	    let remobg = require('remove.bg')
 	    let apirnobg = ['q61faXzzR5zNU6cvcrwtUkRU','S258diZhcuFJooAtHTaPEn4T','5LjfCVAp4vVNYiTjq9mXJWHF','aT7ibfUsGSwFyjaPZ9eoJc61','BY63t7Vx2tS68YZFY6AJ4HHF','5Gdq1sSWSeyZzPMHqz7ENfi8','86h6d6u4AXrst4BVMD9dzdGZ','xp8pSDavAgfE5XScqXo9UKHF','dWbCoCb3TacCP93imNEcPxcL']
 	    let apinobg = apirnobg[Math.floor(Math.random() * apirnobg.length)]
-	    hmm = await './src/remobg-'+getRandom('')
-	    localFile = await chika.downloadAndSaveMediaMessage(quoted, hmm)
-	    outputFile = await './src/hremo-'+getRandom('.png')
-	    reply(mess.wait)
+	    hmm = await './image/remobg-'+getRandom('')
+	    localFile = await chika.downloadAndSaveMediaMessage(qmsg, hmm)
+	    outputFile = await './image/hremo-'+getRandom('.png')
+	    m.reply(mess.wait)
 	    remobg.removeBackgroundFromImageFile({
 	      path: localFile,
 	      apiKey: apinobg,
@@ -1643,29 +1650,25 @@ break
         })
         }
         break
-	    case 'play': case 'ytplay': {
-                if (!q) return reply(`Example : ${prefix + command} story wa anime`)
+    case 'song': {
+                if (!q) return reply(`Example : ${prefix + command} tak ingin usai`)
                 reply(mess.wait)
                 let yts = require("yt-search")
                 let search = await yts(text)
                 let anu = search.videos[Math.floor(Math.random() * search.videos.length)]
                 let buttons = [
-                    {buttonId: `ytmp3 ${anu.url}`, buttonText: {displayText: '♫ Audio'}, type: 1},
-                    {buttonId: `ytmp4 ${anu.url}`, buttonText: {displayText: '► Video'}, type: 1}
+                    {buttonId: `ytmp3 ${anu.url}`, buttonText: {displayText: '🎧 Audio'}, type: 1},
+                    {buttonId: `ytmp4 ${anu.url}`, buttonText: {displayText: '🎥 Video'}, type: 1},
+                    {buttonId: `song ${anu.url}`, buttonText: {displayText: '🕵️Search'}, type: 1}
                 ]
                 let buttonMessage = {
                     image: { url: anu.thumbnail },
                     caption: `
-⭔ Title : ${anu.title}
-⭔ Ext : Search
-⭔ ID : ${anu.videoId}
-⭔ Duration : ${anu.timestamp}
-⭔ Viewers : ${anu.views}
-⭔ Upload At : ${anu.ago}
-⭔ Author : ${anu.author.name}
-⭔ Channel : ${anu.author.url}
-⭔ Description : ${anu.description}
-⭔ Url : ${anu.url}`,
+📄 *Title:* ${anu.title}
+⏱️ *Duration:* ${anu.timestamp}
+🕵️ *Viewers:* ${anu.views}
+🗓️ *Upload:* ${anu.ago}
+🗣️ *Author:* ${anu.author.name}`,
                     footer: ownername,
                     buttons: buttons,
                     headerType: 4
@@ -1673,27 +1676,27 @@ break
                 chika.sendMessage(m.chat, buttonMessage, { quoted: m })
             }
             break
-	    case 'ytmp3': case 'ytaudio': {
-                let { yta } = require('./lib/y2mate.js')
+	    case 'ytmp3': {
+                let { yta } = require('./lib/y2mate')
                 if (!q) return reply(`Example : ${prefix + command} https://youtube.com/watch?v=PtFMh6Tccag%27 128kbps`)
                 let quality = args[1] ? args[1] : '128kbps'
                 let media = await yta(text, quality)
                 if (media.filesize >= 100000) return reply('File Melebihi Batas '+util.format(media))
-                chika.sendImage(m.chat, media.thumb, `⭔ Title : ${media.title}\n⭔ File Size : ${media.filesizeF}\n⭔ Url : ${isUrl(text)}\n⭔ Ext : MP3\n⭔ Resolusi : ${args[1] || '128kbps'}`, m)
+                chika.sendImage(m.chat, media.thumb, `🤖 : *Sedang Memproses Audio* ( ${media.title}.mp3 )`, m)
                 chika.sendMessage(m.chat, { audio: { url: media.dl_link }, mimetype: 'audio/mpeg', fileName: `${media.title}.mp3` }, { quoted: m })
             }
             break
-            case 'ytmp4': case 'ytvideo': {
-                let { ytv } = require('./lib/y2mate.js')
+            case 'ytmp4': {
+                let { ytv } = require('./lib/y2mate')
                 if (!q) return reply(`Example : ${prefix + command} https://youtube.com/watch?v=PtFMh6Tccag%27 360p`)
                 let quality = args[1] ? args[1] : '360p'
                 let media = await ytv(text, quality)
                 if (media.filesize >= 100000) return reply('File Melebihi Batas '+util.format(media))
-                chika.sendMessage(m.chat, { video: { url: media.dl_link }, mimetype: 'video/mp4', fileName: `${media.title}.mp4`, caption: `⭔ Title : ${media.title}\n⭔ File Size : ${media.filesizeF}\n⭔ Url : ${isUrl(text)}\n⭔ Ext : MP3\n⭔ Resolusi : ${args[1] || '360p'}` }, { quoted: m })
+                chika.sendMessage(m.chat, { video: { url: media.dl_link }, mimetype: 'video/mp4', fileName: `${media.title}.mp4`, caption: `🤖 : *Berhasil Mengunduh* ( _${media.title}_ )\n\n•Upload By : Rose-Userbot` }, { quoted: m })
             }
             break
 	    case 'getmusic': {
-                let { yta } = require('./lib/y2mate.js')
+                let { yta } = require('./lib/y2mate')
                 if (!q) return reply(`Example : ${prefix + command} 1`)
                 if (!m.quoted) return reply('Reply Pesan')
                 if (!m.quoted.isBaileys) throw `Hanya Bisa Membalas Pesan Dari Bot`
@@ -1707,7 +1710,7 @@ break
             }
             break
             case 'getvideo': {
-                let { ytv } = require('./lib/y2mate.js')
+                let { ytv } = require('./lib/y2mate')
                 if (!q) return reply(`Example : ${prefix + command} 1`)
                 if (!m.quoted) return reply('Reply Pesan')
                 if (!m.quoted.isBaileys) throw `Hanya Bisa Membalas Pesan Dari Bot`
@@ -1728,119 +1731,6 @@ break
                 chika.sendMessage(m.chat, { image: { url: result }, caption: '⭔ Media Url : '+result }, { quoted: m })
             }
             break
-case 'webtonsearch': case 'webtoon':
-                if (!text) return reply('Yang mau di cari apa?')
-                await reply(mess.wait)
-                chika.Webtoons(q).then(async data => {
-                    let txt = `*------「 WEBTOONS-SEARCH 」------*\n\n`
-                    for (let i of data) {
-                        txt += `*📫 Title :* ${i.judul}\n`
-                        txt += `*👍🏻 Like :* ${i.like}\n`
-                        txt += `*🤴🏻 Creator :* ${i.creator}\n`
-                        txt += `*🎥 Genre :* ${i.genre}\n`
-                        txt += `*📚 Url :* ${i.url}\n ----------------------------------------------------------\n`
-                    }
-                    await reply(txt)
-                })
-                .catch((err) => {
-                    reply(mess.error)
-                })
-            break
-            case 'drakor':
-                if (!text) return reply('Yang mau di cari apa?')
-                await reply(mess.wait)
-                chika.Drakor(`${text}`).then(async data => {
-                    let txt = `*-----「 DRAKOR-SEARCH 」-----*\n\n`
-                    for (let i of data) {
-                        txt += `*📫 Title :* ${i.judul}\n`
-                        txt += `*📆 Years :* ${i.years}\n`
-                        txt += `*🎥 Genre :* ${i.genre}\n`
-                        txt += `*📚 Url :* ${i.url}\n-----------------------------------------------------\n`
-                    }
-                    await sendFileFromUrl(from,data[0].thumbnail,txt,m)
-                })
-                .catch((err) => {
-                    reply(mess.error)
-                })
-            break
-            case 'anime':{
-                if (!text) return reply('Yang mau di cari apa?')
-                await reply(mess.wait)
-                chika.Anime(q).then(async data => {
-                    let txt = `*-------「 ANIME-SEARCH 」-------*\n\n`
-                    for (let i of data) {
-                        txt += `*📫 Title :* ${i.judul}\n`
-                        txt += `*📚 Url :* ${i.link}\n-----------------------------------------------------\n`
-                    }
-                    let gam = await getBuffer(data[0].thumbnail.replace('https://www.anime-planet.com',''))
-                    var but = [
-				{
-					"urlButton": {
-						"displayText": `Rest Api's`,
-						"url": `${myweb}`
-						}
-					}
-				]
-				await chika.send5ButLoc(from, txt , `© ${ownername}`,gam, but , { userJid: m.chat, quoted: m })
-                })
-                .catch((err) => {
-                    reply(mess.error)
-                })
-                }
-            break
-            case 'character': case 'karakter':
-                if (!text) return reply('Yang mau di cari apa?')
-                await reply(mess.wait)
-                chika.Character(q).then(async data => {
-                    let txt = `*---「 CHARACTER-SEARCH 」---*\n\n`
-                    for (let i of data) {
-                        txt += `*📫 Character :* ${i.character}\n`
-                        txt += `*📚 Url :* ${i.link}\n-----------------------------------------------------\n`
-                    }
-                    let gam = await getBuffer(data[0].thumbnail.replace('https://www.anime-planet.com',''))
-                    var but = [
-				{
-					"urlButton": {
-						"displayText": `Rest Api's`,
-						"url": `${myweb}`
-						}
-					}
-				]
-				await chika.send5ButLoc(from, txt , `© ${ownername}`,gam, but , { userJid: m.chat, quoted: m })
-                })
-                .catch((err) => {
-                    reply(mess.error)
-                })
-            break
-            case 'manga':
-                if (!text) return reply('Yang mau di cari apa?')
-                await reply(mess.wait)
-                chika.Manga(`${text}`).then(async data => {
-                    let txt = `*------「 MANGA-SEARCH 」------*\n\n`
-                    for (let i of data) {
-                         txt += `*📫 Title :* ${i.judul}\n`
-                         txt += `*📚 Url :* ${i.link}\n-----------------------------------------------------\n`
-                    }
-                    let gam = await getBuffer(data[0].thumbnail.replace('https://www.anime-planet.com',''))
-                    var but = [
-				{
-					"urlButton": {
-						"displayText": `Rest Api's`,
-						"url": `${myweb}`
-						}
-					}
-				]
-				await chika.send5ButLoc(from, txt , `© ${ownername}`,gam, but , { userJid: m.chat, quoted: m })
-                })
-                .catch((err) => {
-                    reply(mess.error)
-                })
-            break
-            case 'waifu': case 'husbu': case 'neko': case 'shinobu': case 'megumin': case 'waifus': case 'nekos': case 'trap': case 'blowjob': {
-                reply(mess.wait)
-                chika.sendMessage(m.chat, { image: { url: api('zenz', '/api/random/'+command, {}, 'apikey') }, caption: 'Generate Random ' + command }, { quoted: m })
-            }
-            break
 	    case 'couple': {
                 reply(mess.wait)
                 let anu = await fetchJson('https://raw.githubusercontent.com/iamriz7/kopel_/main/kopel.json')
@@ -1848,7 +1738,7 @@ case 'webtonsearch': case 'webtoon':
                 chika.sendMessage(m.chat, { image: { url: random.male }, caption: `Couple Male` }, { quoted: m })
                 chika.sendMessage(m.chat, { image: { url: random.female }, caption: `Couple Female` }, { quoted: m })
             }
-	    break
+		    break
             case 'coffe': case 'kopi': {
             reply(mess.wait)
             let buttons = [
@@ -1863,6 +1753,7 @@ case 'webtonsearch': case 'webtoon':
                 }
                 chika.sendMessage(m.chat, buttonMessage, { quoted: m })
             }
+            break
             break
             case 'wikimedia': {
                 if (!text) throw 'Masukkan Query Title'
@@ -1896,30 +1787,6 @@ case 'webtonsearch': case 'webtoon':
                     headerType: 2
                 }
                 chika.sendMessage(m.chat, buttonMessage, { quoted: m })
-            }
-            break
-            case '3dchristmas': case '3ddeepsea': case 'americanflag': case '3dscifi': case '3drainbow': case '3dwaterpipe': case 'halloweenskeleton': case 'sketch': case 'bluecircuit': case 'space': case 'metallic': case 'fiction': case 'greenhorror': case 'transformer': case 'berry': case 'thunder': case 'magma': case '3dcrackedstone': case '3dneonlight': case 'impressiveglitch': case 'naturalleaves': case 'fireworksparkle': case 'matrix': case 'dropwater':  case 'harrypotter': case 'foggywindow': case 'neondevils': case 'christmasholiday': case '3dgradient': case 'blackpink': case 'gluetext': {
-                 if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		db.data.users[m.sender].limit -= 1 // -1 limit
-                if (!q) return reply(`Example ${prefix + command} ${pushname}`)
-                reply(mess.wait)
-                chika.sendMessage(m.chat, { image: { url: api('zenz', '/textpro/' + command, { text: text }, 'apikey') }, caption: `Text Pro ${command}` }, { quoted: m})
-	    }
-            break
-	    case 'shadow': case 'romantic': case 'smoke': case 'burnpapper': case 'naruto': case 'lovemsg': case 'grassmsg': case 'lovetext': case 'coffecup': case 'butterfly': case 'harrypotter': case 'retrolol': {
-                 if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		db.data.users[m.sender].limit -= 1 // -1 limit
-                if (!q) return reply(`Example ${prefix + command} ${pushname}`)
-                reply(mess.wait)
-                chika.sendMessage(m.chat, { image: { url: api('zenz', '/photooxy/' + command, { text: text }, 'apikey') }, caption: `Photo Oxy ${command}` }, { quoted: m })
-            }
-            break
-            case 'ffcover': case 'crossfire': case 'galaxy': case 'glass': case 'neon': case 'beach': case 'blackpink': case 'igcertificate': case 'ytcertificate': {
-                if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		db.data.users[m.sender].limit -= 1 // -1 limit
-                if (!q) return reply(`Example ${prefix + command} ${pushname}`)
-                reply(mess.wait)
-                chika.sendMessage(m.chat, { image: { url: api('zenz', '/ephoto/' + command, { text: text }, 'apikey') }, caption: `Ephoto ${command}` }, { quoted: m })
             }
             break
 	    case 'nomerhoki': case 'nomorhoki': {
@@ -2477,230 +2344,7 @@ teks += "Jalan Tikus Meme\n\n"
 teks += `Source: ${res}`
 teks += ""
 chika.sendMessage(m.chat, { image : { url : res }, caption: teks }, { quoted : m })
-break
-	    case 'stalker': case 'stalk': {
-		if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply('Limit Harian Anda Telah Habis')
-                if (!text) return reply(`Example : ${prefix +command} type id\n\nList Type :\n1. ff (Free Fire)\n2. ml (Mobile Legends)\n3. aov (Arena Of Valor)\n4. cod (Call Of Duty)\n5. pb (point Blank)\n6. ig (Instagram)\n7. npm (https://npmjs.com)`)
-                let [type, id, zone] = args
-                if (type.toLowerCase() == 'ff') {
-                    if (!id) throw `No Query id, Example ${prefix + command} ff 552992060`
-                    let anu = await fetchJson(api('zenz', '/api/nickff', { apikey: global.APIKeys[global.APIs['zenz']], query: id }))
-                    if (anu.status == false) return reply(anu.result.message)
-                    reply(`ID : ${anu.result.gameId}\nUsername : ${anu.result.userName}`)
-		    db.data.users[m.sender].limit -= 1
-                } else if (type.toLowerCase() == 'ml') {
-                    if (!id) throw `No Query id, Example : ${prefix + command} ml 214885010 2253`
-                    if (!zone) throw `No Query id, Example : ${prefix + command} ml 214885010 2253`
-                    let anu = await fetchJson(api('zenz', '/api/nickml', { apikey: global.APIKeys[global.APIs['zenz']], query: id, query2: zone }))
-                    if (anu.status == false) return reply(anu.result.message)
-                    reply(`ID : ${anu.result.gameId}\nZone : ${anu.result.zoneId}\nUsername : ${anu.result.userName}`)
-		    db.data.users[m.sender].limit -= 1
-                } else if (type.toLowerCase() == 'aov') {
-                    if (!id) throw `No Query id, Example ${prefix + command} aov 293306941441181`
-                    let anu = await fetchJson(api('zenz', '/api/nickaov', { apikey: global.APIKeys[global.APIs['zenz']], query: id }))
-                    if (anu.status == false) return reply(anu.result.message)
-                    reply(`ID : ${anu.result.gameId}\nUsername : ${anu.result.userName}`)
-		    db.data.users[m.sender].limit -= 1
-                } else if (type.toLowerCase() == 'cod') {
-                    if (!id) throw `No Query id, Example ${prefix + command} cod 6290150021186841472`
-                    let anu = await fetchJson(api('zenz', '/api/nickcod', { apikey: global.APIKeys[global.APIs['zenz']], query: id }))
-                    if (anu.status == false) return reply(anu.result.message)
-                    reply(`ID : ${anu.result.gameId}\nUsername : ${anu.result.userName}`)
-		    db.data.users[m.sender].limit -= 1
-                } else if (type.toLowerCase() == 'pb') {
-                    if (!id) throw `No Query id, Example ${prefix + command} pb riio46`
-                    let anu = await fetchJson(api('zenz', '/api/nickpb', { apikey: global.APIKeys[global.APIs['zenz']], query: id }))
-                    if (anu.status == false) return reply(anu.result.message)
-                    reply(`ID : ${anu.result.gameId}\nUsername : ${anu.result.userName}`)
-		    db.data.users[m.sender].limit -= 1
-                } else if (type.toLowerCase() == 'ig') {
-                    if (!id) throw `No Query username, Example : ${prefix + command} ig cak_haho`
-                    let { result: anu } = await fetchJson(api('zenz', '/api/stalker/ig', { username: id }, 'apikey'))
-                    if (anu.status == false) return reply(anu.result.message)
-                    chika.sendMedia(m.chat, anu.caption.profile_hd, '', `⭔ Full Name : ${anu.caption.full_name}\n⭔ User Name : ${anu.caption.user_name}\n⭔ ID ${anu.caption.user_id}\n⭔ Followers : ${anu.caption.followers}\n⭔ Following : ${anu.caption.following}\n⭔ Bussines : ${anu.caption.bussines}\n⭔ Profesional : ${anu.caption.profesional}\n⭔ Verified : ${anu.caption.verified}\n⭔ Private : ${anu.caption.private}\n⭔ Bio : ${anu.caption.biography}\n⭔ Bio Url : ${anu.caption.bio_url}`, m)
-		    db.data.users[m.sender].limit -= 1
-                } else if (type.toLowerCase() == 'npm') {
-                    if (!id) throw `No Query username, Example : ${prefix + command} npm scrape-primbon`
-                    let { result: anu } = await fetchJson(api('zenz', '/api/stalker/npm', { query: id }, 'apikey'))
-                    if (anu.status == false) return reply(anu.result.message)
-                    reply(`⭔ Name : ${anu.name}\n⭔ Version : ${Object.keys(anu.versions)}\n⭔ Created : ${tanggal(anu.time.created)}\n⭔ Modified : ${tanggal(anu.time.modified)}\n⭔ Maintainers :\n ${anu.maintainers.map(v => `- ${v.name} : ${v.email}`).join('\n')}\n\n⭔ Description : ${anu.description}\n⭔ Homepage : ${anu.homepage}\n⭔ Keywords : ${anu.keywords}\n⭔ Author : ${anu.author.name}\n⭔ License : ${anu.license}\n⭔ Readme : ${anu.readme}`)
-		    db.data.users[m.sender].limit -= 1
-                } else {
-                    reply(`Example : ${prefix +command} type id\n\nList Type :\n1. ff (Free Fire)\n2. ml (Mobile Legends)\n3. aov (Arena Of Valor)\n4. cod (Call Of Duty)\n5. pb (point Blank)\n6. ig (Instagram)\n7. npm (https://npmjs.com)`)
-                }
-            }
-            break
-	        case 'tiktok': case 'tiktoknowm': {
-                if (!text) throw 'Masukkan Query Link!'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/downloader/tiktok', { url: text }, 'apikey'))
-                let buttons = [
-                    {buttonId: `tiktokwm ${text}`, buttonText: {displayText: '► With Watermark'}, type: 1},
-                    {buttonId: `tiktokmp3 ${text}`, buttonText: {displayText: '♫ Audio'}, type: 1}
-                ]
-                let buttonMessage = {
-                    video: { url: anu.result.nowatermark },
-                    caption: `Download From ${text}`,
-                    footer: 'Press The Button Below',
-                    buttons: buttons,
-                    headerType: 5
-                }
-                chika.sendMessage(m.chat, buttonMessage, { quoted: m })
-            }
-            break
-            case 'tiktokwm': case 'tiktokwatermark': {
-                if (!text) throw 'Masukkan Query Link!'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/downloader/tiktok', { url: text }, 'apikey'))
-                let buttons = [
-                    {buttonId: `tiktoknowm ${text}`, buttonText: {displayText: '► No Watermark'}, type: 1},
-                    {buttonId: `tiktokmp3 ${text}`, buttonText: {displayText: '♫ Audio'}, type: 1}
-                ]
-                let buttonMessage = {
-                    video: { url: anu.result.watermark },
-                    caption: `Download From ${text}`,
-                    footer: 'Press The Button Below',
-                    buttons: buttons,
-                    headerType: 5
-                }
-                chika.sendMessage(m.chat, buttonMessage, { quoted: m })
-            }
-            break
-            case 'tiktokmp3': case 'tiktokaudio': {
-                if (!text) throw 'Masukkan Query Link!'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/downloader/musically', { url: text }, 'apikey'))
-                let buttons = [
-                    {buttonId: `tiktoknowm ${text}`, buttonText: {displayText: '► No Watermark'}, type: 1},
-                    {buttonId: `tiktokwm ${text}`, buttonText: {displayText: '► With Watermark'}, type: 1}
-                ]
-                let buttonMessage = {
-                    text: `Download From ${text}`,
-                    footer: 'Press The Button Below',
-                    buttons: buttons,
-                    headerType: 2
-                }
-                let msg = await chika.sendMessage(m.chat, buttonMessage, { quoted: m })
-                chika.sendMessage(m.chat, { audio: { url: anu.result.audio }, mimetype: 'audio/mpeg'}, { quoted: msg })
-            }
-            break
-	        case 'instagram': case 'ig': case 'igdl': {
-                if (!text) throw 'No Query Url!'
-                reply(mess.wait)
-                if (/(?:\/p\/|\/reel\/|\/tv\/)([^\s&]+)/.test(isUrl(text)[0])) {
-                    let anu = await fetchJson(api('zenz', '/downloader/instagram2', { url: isUrl(text)[0] }, 'apikey'))
-                    for (let media of anu.data) chika.sendMedia(m.chat, media, '', `Download Url Instagram From ${isUrl(text)[0]}`, m)
-                } else if (/\/stories\/([^\s&]+)/.test(isUrl(text)[0])) {
-                    let anu = await fetchJson(api('zenz', '/downloader/instastory', { url: isUrl(text)[0] }, 'apikey'))
-                    chika.sendMedia(m.chat, anu.media[0].url, '', `Download Url Instagram From ${isUrl(text)[0]}`, m)
-                }
-            }
-            break
-		/** Backup misal yg atas ga keluar video **/
-		case 'igeh': case 'instagram2': case 'ig2': case 'igdl2': {
-                if (!text) throw 'Masukkan Query Link!'
-                reply(mess.wait)
-                
-                let anu = await fetchJson(api('zenz', '/downloader/instagram2', { url:text }, 'apikey'))
-                chika.sendMessage(m.chat, { video: { url: anu.data[0] } }, { quoted: m })
-            }
-            break
-            case 'joox': case 'jooxdl': {
-                if (!text) throw 'No Query Title'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/downloader/joox', { query: text }, 'apikey'))
-                let msg = await chika.sendImage(m.chat, anu.result.img, `⭔ Title : ${anu.result.lagu}\n⭔ Album : ${anu.result.album}\n⭔ Singer : ${anu.result.penyanyi}\n⭔ Publish : ${anu.result.publish}\n⭔ Lirik :\n${anu.result.lirik.result}`, m)
-                chika.sendMessage(m.chat, { audio: { url: anu.result.mp4aLink }, mimetype: 'audio/mpeg', fileName: anu.result.lagu+'.m4a' }, { quoted: msg })
-            }
-            break
-            case 'soundcloud': case 'scdl': {
-                if (!text) throw 'No Query Title'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/downloader/soundcloud', { url: isUrl(text)[0] }, 'apikey'))
-                let msg = await chika.sendImage(m.chat, anu.result.thumb, `⭔ Title : ${anu.result.title}\n⭔ Url : ${isUrl(text)[0]}`)
-                chika.sendMessage(m.chat, { audio: { url: anu.result.url }, mimetype: 'audio/mpeg', fileName: anu.result.title+'.m4a' }, { quoted: msg })
-            }
-            break
-	        case 'twitdl': case 'twitter': {
-                if (!text) throw 'Masukkan Query Link!'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/api/downloader/twitter', { url: text }, 'apikey'))
-                let buttons = [
-                    {buttonId: `twittermp3 ${text}`, buttonText: {displayText: '► Audio'}, type: 1}
-                ]
-                let buttonMessage = {
-                    video: { url: anu.result.HD || anu.result.SD },
-                    caption: util.format(anu.result),
-                    footer: 'Press The Button Below',
-                    buttons: buttons,
-                    headerType: 5
-                }
-                chika.sendMessage(m.chat, buttonMessage, { quoted: m })
-            }
-            break
-            case 'twittermp3': case 'twitteraudio': {
-                if (!text) throw 'Masukkan Query Link!'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/api/downloader/twitter', { url: text }, 'apikey'))
-                let buttons = [
-                    {buttonId: `twitter ${text}`, buttonText: {displayText: '► Video'}, type: 1}
-                ]
-                let buttonMessage = {
-		    image: { url: anu.result.thumb },
-                    caption: util.format(anu.result),
-                    footer: 'Press The Button Below',
-                    buttons: buttons,
-                    headerType: 4
-                }
-                let msg = await chika.sendMessage(m.chat, buttonMessage, { quoted: m })
-                chika.sendMessage(m.chat, { audio: { url: anu.result.audio } }, { quoted: msg })
-            }
-            break
-	        case 'fbdl': case 'fb': case 'facebook': {
-                if (!text) throw 'Masukkan Query Link!'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/api/downloader/facebook', { url: text }, 'apikey'))
-                chika.sendMessage(m.chat, { video: { url: anu.result.url }, caption: `⭔ Title : ${anu.result.title}`}, { quoted: m })
-            }
-            break
-	        case 'pindl': case 'pinterestdl': {
-                if (!text) throw 'Masukkan Query Link!'
-                reply(mess.wait)
-                let anu = await fetchJson(api('zenz', '/api/downloader/pinterestdl', { url: text }, 'apikey'))
-                chika.sendMessage(m.chat, { video: { url: anu.result }, caption: `Download From ${text}` }, { quoted: m })
-            }
-            break
-            case 'umma': case 'ummadl': {
-	        if (!q) return reply(`Example : ${prefix + command} https://umma.id/channel/video/post/gus-arafat-sumber-kecewa-84464612933698`)
-                let { umma } = require('./lib) scraper')
-		let anu = await umma(isUrl(text)[0])
-		if (anu.type == 'video') {
-		    let buttons = [
-                        {buttonId: `ytmp3 ${anu.media[0]} 128kbps`, buttonText: {displayText: '♫ Audio'}, type: 1},
-                        {buttonId: `ytmp4 ${anu.media[0]} 360p`, buttonText: {displayText: '► Video'}, type: 1}
-                    ]
-		    let buttonMessage = {
-		        image: { url: anu.author.profilePic },
-			caption: `
-⭔ Title : ${anu.title}
-⭔ Author : ${anu.author.name}
-⭔ Like : ${anu.like}
-⭔ Caption : ${anu.caption}
-⭔ Url : ${anu.media[0]}
-Untuk Download Media Silahkan Klik salah satu Button dibawah ini atau masukkan command ytmp3/ytmp4 dengan url diatas
-`,
-			footer: ownername,
-			buttons,
-			headerType: 4
-		    }
-		    chika.sendMessage(m.chat, buttonMessage, { quoted: m })
-		} else if (anu.type == 'image') {
-		    anu.media.map(async (url) => {
-		        chika.sendMessage(m.chat, { image: { url }, caption: `⭔ Title : ${anu.title}\n⭔ Author : ${anu.author.name}\n⭔ Like : ${anu.like}\n⭔ Caption : ${anu.caption}` }, { quoted: m })
-		    })
-		}
-	    }
-	    break
+  break
         case 'ringtone': {
 		if (!q) return reply(`Example : ${prefix + command} black rover`)
         let { ringtone } = require('./lib/scraper')
@@ -2714,26 +2358,6 @@ Untuk Download Media Silahkan Klik salah satu Button dibawah ini atau masukkan c
 		if (!text) throw oh
 		yy = await getBuffer(`https://islamic-api-indonesia.herokuapp.com/api/data/pdf/iqra${text}`)
 		chika.sendMessage(m.chat, {document: yy, mimetype: 'application/pdf', fileName: `iqra${text}.pdf`}, {quoted:m}).catch ((err) => reply(oh))
-		}
-		break
-		case 'juzamma': {
-		if (args[0] === 'pdf') {
-		reply(mess.wait)
-		chika.sendMessage(m.chat, {document: {url: 'https://fatiharridho.my.id/database/islam/juz-amma-arab-latin-indonesia.pdf'}, mimetype: 'application/pdf', fileName: 'juz-amma-arab-latin-indonesia.pdf'}, {quoted:m})
-		} else if (args[0] === 'docx') {
-		reply(mess.wait)
-		chika.sendMessage(m.chat, {document: {url: 'https://fatiharridho.my.id/database/islam/juz-amma-arab-latin-indonesia.docx'}, mimetype: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', fileName: 'juz-amma-arab-latin-indonesia.docx'}, {quoted:m})
-		} else if (args[0] === 'pptx') {
-		reply(mess.wait)
-		chika.sendMessage(m.chat, {document: {url: 'https://fatiharridho.my.id/database/islam/juz-amma-arab-latin-indonesia.pptx'}, mimetype: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', fileName: 'juz-amma-arab-latin-indonesia.pptx'}, {quoted:m})
-		} else if (args[0] === 'xlsx') {
-		reply(mess.wait)
-		chika.sendMessage(m.chat, {document: {url: 'https://fatiharridho.my.id/database/islam/juz-amma-arab-latin-indonesia.xlsx'}, mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', fileName: 'juz-amma-arab-latin-indonesia.xlsx'}, {quoted:m})
-		} else {
-		reply(`Mau format apa ? Example : ${prefix + command} pdf
-
-Format yang tersedia : pdf, docx, pptx, xlsx`)
-		}
 		}
 		break
 		case 'hadis': case 'hadist': {
@@ -2830,49 +2454,6 @@ ${id}`)
                 reply(e)
                 }
                 break
-            case 'setcmd': {
-                if (!m.quoted) throw 'Reply Pesan!'
-                if (!m.quoted.fileSha256) throw 'SHA256 Hash Missing'
-                if (!q) return reply(`Untuk Command Apa?`)
-                let hash = m.quoted.fileSha256.toString('base64')
-                if (global.db.data.sticker[hash] && global.db.data.sticker[hash].locked) throw 'You have no permission to change this sticker command'
-                global.db.data.sticker[hash] = {
-                    text,
-                    mentionedJid: m.mentionedJid,
-                    creator: m.sender,
-                    at: + new Date,
-                    locked: false,
-                }
-                reply(`Done!`)
-            }
-            break
-            case 'delcmd': {
-                let hash = m.quoted.fileSha256.toString('base64')
-                if (!hash) throw `Tidak ada hash`
-                if (global.db.data.sticker[hash] && global.db.data.sticker[hash].locked) throw 'You have no permission to delete this sticker command'              
-                delete global.db.data.sticker[hash]
-                reply(`Done!`)
-            }
-            break
-            case 'listcmd': {
-                let teks = `
-*List Hash*
-Info: *bold* hash is Locked
-${Object.entries(global.db.data.sticker).map(([key, value], index) => `${index + 1}. ${value.locked ? `*${key}*` : key} : ${value.text}`).join('\n')}
-`.trim()
-                chika.sendText(m.chat, teks, m, { mentions: Object.values(global.db.data.sticker).map(x => x.mentionedJid).reduce((a,b) => [...a, ...b], []) })
-            }
-            break
-            case 'lockcmd': {
-                if (!isCreator) return reply(mess.owner)
-                if (!m.quoted) throw 'Reply Pesan!'
-                if (!m.quoted.fileSha256) throw 'SHA256 Hash Missing'
-                let hash = m.quoted.fileSha256.toString('base64')
-                if (!(hash in global.db.data.sticker)) throw 'Hash not found in database'
-                global.db.data.sticker[hash].locked = !/^un/i.test(command)
-                reply('Done!')
-            }
-            break
             case 'addmsg': {
                 if (!m.quoted) throw 'Reply Message Yang Ingin Disave Di Database'
                 if (!q) return reply(`Example : ${prefix + command} nama file`)
@@ -2903,125 +2484,13 @@ Lihat list Pesan Dengan ${prefix}listmsg`)
 	        reply(teks)
 	    }
 	    break
-            case 'delmsg': case 'deletemsg': {
+            case 'delmsg': {
 	        let msgs = global.db.data.database
 	        if (!(text.toLowerCase() in msgs)) return reply(`'${text}' tidak terdaftar didalam list pesan`)
 		delete msgs[text.toLowerCase()]
 		reply(`Berhasil menghapus '${text}' dari list pesan`)
             }
 	    break
-	    case 'anonymous': {
-                if (m.isGroup) return reply('Fitur Tidak Dapat Digunakan Untuk Group!')
-				this.anonymous = this.anonymous ? this.anonymous : {}
-				let buttons = [
-                    { buttonId: 'start', buttonText: { displayText: 'Start' }, type: 1 }
-                ]
-                chika.sendButtonText(m.chat, buttons, `\`\`\`Hi ${await chika.getName(m.sender)} Welcome To Anonymous Chat\n\nKlik Button Dibawah Ini Untuk Mencari Partner\`\`\``, ownername, m)
-            }
-			break
-            case 'keluar': case 'leave': {
-                if (m.isGroup) return reply('Fitur Tidak Dapat Digunakan Untuk Group!')
-                this.anonymous = this.anonymous ? this.anonymous : {}
-                let room = Object.values(this.anonymous).find(room => room.check(m.sender))
-                if (!room) {
-                    let buttons = [
-                        { buttonId: 'start', buttonText: { displayText: 'Start' }, type: 1 }
-                    ]
-                    await chika.sendButtonText(m.chat, buttons, `\`\`\`Kamu Sedang Tidak Berada Di Sesi Anonymous, Tekan Button Untuk Mencari Partner \`\`\``)
-                    throw false
-                }
-                reply('Ok')
-                let other = room.other(m.sender)
-                if (other) await chika.sendText(other, `\`\`\`Pasangan Anda Telah Menghentikan Dialog🥲\nKetik #start Untuk Menenukan Pasangan Baru\`\`\``, m)
-                delete this.anonymous[room.id]
-                if (command === 'leave') break
-            }
-            case 'mulai': case 'start': {
-                if (m.isGroup) return reply('Fitur Tidak Dapat Digunakan Untuk Group!')
-                this.anonymous = this.anonymous ? this.anonymous : {}
-                if (Object.values(this.anonymous).find(room => room.check(m.sender))) {
-                    let buttons = [
-                        { buttonId: 'keluar', buttonText: { displayText: 'Stop' }, type: 1 }
-                    ]
-                    await chika.sendButtonText(m.chat, buttons, `\`\`\`Kamu Masih Berada Di dalam Sesi Anonymous, Tekan Button Dibawah Ini Untuk Menghentikan Sesi Anonymous Anda\`\`\``, ownername, m)
-                    throw false
-                }
-                let room = Object.values(this.anonymous).find(room => room.state === 'WAITING' && !room.check(m.sender))
-                if (room) {
-                    let buttons = [
-                        { buttonId: 'next', buttonText: { displayText: 'Skip' }, type: 1 },
-                        { buttonId: 'keluar', buttonText: { displayText: 'Stop' }, type: 1 }
-                    ]
-                    await chika.sendButtonText(room.a, buttons, `\`\`\`Pasangan Ditemukan🙉\n\nKetik Menggunakan (#) Pagar Untuk Berdialog Dengan Pasangan Anda 🥳\nContoh : #halo kaka\`\`\``, ownername, m)
-                    room.b = m.sender
-                    room.state = 'CHATTING'
-                    await chika.sendButtonText(room.b, buttons, `\`\`\` Pasangan Ditemukan🙉\n\nKetik Menggunakan (#) Pagar Untuk Berdialog Dengan Pasangan Anda 🥳\nContoh : #halo kaka\`\`\``, ownername, m)
-                } else {
-                    let id = + new Date
-                    this.anonymous[id] = {
-                        id,
-                        a: m.sender,
-                        b: '',
-                        state: 'WAITING',
-                        check: function (who = '') {
-                            return [this.a, this.b].includes(who)
-                        },
-                        other: function (who = '') {
-                            return who === this.a ? this.b : who === this.b ? this.a : ''
-                        },
-                    }
-                    let buttons = [
-                        { buttonId: 'keluar', buttonText: { displayText: 'Stop' }, type: 1 }
-                    ]
-                    await chika.sendButtonText(m.chat, buttons, `\`\`\`Mohon Tunggu Sedang Mencari Partner....\`\`\``, ownername, m)
-                }
-                break
-            }
-            case 'next': case 'lanjut': {
-                if (m.isGroup) return reply('Fitur Tidak Dapat Digunakan Untuk Group!')
-                this.anonymous = this.anonymous ? this.anonymous : {}
-                let romeo = Object.values(this.anonymous).find(room => room.check(m.sender))
-                if (!romeo) {
-                    let buttons = [
-                        { buttonId: 'start', buttonText: { displayText: 'Start' }, type: 1 }
-                    ]
-                    await chika.sendButtonText(m.chat, buttons, `\`\`\`Kamu Sedang Tidak Berada Di Sesi Anonymous, Tekan Button Untuk Mencari Partner\`\`\``)
-                    throw false
-                }
-                let other = romeo.other(m.sender)
-                if (other) await chika.sendText(other, `\`\`\`Partner Telah Meninggalkan Sesi Anonymous\`\`\``, m)
-                delete this.anonymous[romeo.id]
-                let room = Object.values(this.anonymous).find(room => room.state === 'WAITING' && !room.check(m.sender))
-                if (room) {
-                    let buttons = [
-                        { buttonId: 'next', buttonText: { displayText: 'Skip' }, type: 1 },
-                        { buttonId: 'keluar', buttonText: { displayText: 'Stop' }, type: 1 }
-                    ]
-                    await chika.sendButtonText(room.a, buttons, `\`\`\`Pasangan Ditemukan🙉\n\nKetik Menggunakan (#) Pagar Untuk Berdialog Dengan Pasangan Anda 🥳\nContoh : #halo kaka\`\`\``, ownername, m)
-                    room.b = m.sender
-                    room.state = 'CHATTING'
-                    await chika.sendButtonText(room.b, buttons, `\`\`\`Pasangan Ditemukan🙉\n\nKetik Menggunakan (#) Pagar Untuk Berdialog Dengan Pasangan Anda 🥳\nContoh : #halo kaka\`\`\``, ownername, m)
-                } else {
-                    let id = + new Date
-                    this.anonymous[id] = {
-                        id,
-                        a: m.sender,
-                        b: '',
-                        state: 'WAITING',
-                        check: function (who = '') {
-                            return [this.a, this.b].includes(who)
-                        },
-                        other: function (who = '') {
-                            return who === this.a ? this.b : who === this.b ? this.a : ''
-                        },
-                    }
-                    let buttons = [
-                        { buttonId: 'keluar', buttonText: { displayText: 'Stop' }, type: 1 }
-                    ]
-                    await chika.sendButtonText(m.chat, buttons, `\`\`\`Mohon Tunggu Sedang Mencari Partner...\`\`\``, ownername, m)
-                }
-                break
-            }
             case 'public': {
                 if (!isCreator) return reply(mess.owner)
                 chika.public = true
@@ -3034,107 +2503,7 @@ Lihat list Pesan Dengan ${prefix}listmsg`)
                 reply('Sukses Change To Self Usage')
             }
             break
-            case 'ping': case 'botstatus': case 'statusbot': {
-                const used = process.memoryUsage()
-                const cpus = os.cpus().map(cpu => {
-                    cpu.total = Object.keys(cpu.times).reduce((last, type) => last + cpu.times[type], 0)
-			        return cpu
-                })
-                const cpu = cpus.reduce((last, cpu, _, { length }) => {
-                    last.total += cpu.total
-                    last.speed += cpu.speed / length
-                    last.times.user += cpu.times.user
-                    last.times.nice += cpu.times.nice
-                    last.times.sys += cpu.times.sys
-                    last.times.idle += cpu.times.idle
-                    last.times.irq += cpu.times.irq
-                    return last
-                }, {
-                    speed: 0,
-                    total: 0,
-                    times: {
-			            user: 0,
-			            nice: 0,
-			            sys: 0,
-			            idle: 0,
-			            irq: 0
-                }
-                })
-                let timestamp = speed()
-                let latensi = speed() - timestamp
-                neww = performance.now()
-                oldd = performance.now()
-                respon = `
-Kecepatan Respon ${latensi.toFixed(4)} _Second_ \n ${oldd - neww} _miliseconds_\n\nRuntime : ${runtime(process.uptime())}
-
-💻 Info Server
-RAM: ${formatp(os.totalmem() - os.freemem())} / ${formatp(os.totalmem())}
-
-_NodeJS Memory Usaage_
-${Object.keys(used).map((key, _, arr) => `${key.padEnd(Math.max(...arr.map(v=>v.length)),' ')}: ${formatp(used[key])}`).join('\n')}
-
-${cpus[0] ? `_Total CPU Usage_
-${cpus[0].model.trim()} (${cpu.speed} MHZ)\n${Object.keys(cpu.times).map(type => `- *${(type + '*').padEnd(6)}: ${(100 * cpu.times[type] / cpu.total).toFixed(2)}%`).join('\n')}
-_CPU Core(s) Usage (${cpus.length} Core CPU)_
-${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Object.keys(cpu.times).map(type => `- *${(type + '*').padEnd(6)}: ${(100 * cpu.times[type] / cpu.total).toFixed(2)}%`).join('\n')}`).join('\n\n')}` : ''}
-                `.trim()
-                reply(respon)
-            }
-            break
-case 'runtime': {
-const templateMessage = {
-text: '*🚀 Bot Aktif Selama*',footer: `${runtime(process.uptime())}`,
-templateButtons: [
-{
-index: 1, 
-urlButton: {
-displayText: 'YouTube Creator', 
-url: `${youtube}`
-}
-},
-],
-}
-const sendm = chika.sendMessage(from, templateMessage)
-}
-break
-case 'speed': {
-let timestamp = speed()
-let latensi = speed() - timestamp
-const templateMessage = {
-text: '*⚡ Kecepatan Bot*',footer: `${latensi.toFixed(4)} Second`,
-templateButtons: [
-{
-index: 1, 
-urlButton: {
-displayText: 'YouTube Creator', 
-url: `${youtube}`
-}
-},
-],
-}
-const sendm = chika.sendMessage(from, templateMessage)
-}
-break
-case 'owner': case 'creator': {
-chika.sendContact(m.chat, global.owner, m)
-const templateMessage = {
-text: 'Owner Rose-Userbot 🌹',footer: `© ${ownername}`,
-templateButtons: [
-{
-index: 1, 
-urlButton: {
-displayText: 'YouTube Creator', 
-url: `${youtube}`
-}
-},
-],
-}
-const sendm = chika.sendMessage(from, templateMessage)
-            }
-            break
 case 'cry':case 'kill':case 'hug':case 'pat':case 'lick':case 'kiss':case 'bite':case 'yeet':case 'neko':case 'bully':case 'bonk':case 'wink':case 'poke':case 'nom':case 'slap':case 'smile':case 'wave':case 'awoo':case 'blush':case 'smug':case 'glomp':case 'happy':case 'dance':case 'cringe':case 'cuddle':case 'highfive':case 'shinobu':case 'megumin':case 'handhold':
-					 if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		            db.data.users[m.sender].limit -= 1 // -1 limit
                     reply(mess.wait)
 					axios.get(`https://api.waifu.pics/sfw/${command}`)
 					.then(({data}) => {
@@ -3142,294 +2511,41 @@ case 'cry':case 'kill':case 'hug':case 'pat':case 'lick':case 'kiss':case 'bite'
 					})
 					break
 				case 'waifu': case 'loli':
-				     if (!isPremium && global.db.data.users[m.sender].limit < 1) return reply(mess.endLimit) // respon ketika limit habis
-		            db.data.users[m.sender].limit -= 1 // -1 limit
-					reply(mess.wait)
 					axios.get(`https://api.waifu.pics/sfw/waifu`)
 					.then(({data}) => {
 					chika.sendImage(m.chat, data.url, mess.success, m)
 					})
 					break
-case 'playstore': {
-            if (!q) return reply(`Example : ${prefix + command} clash of clans`)
-            reply(mess.wait)
-            let res = await fetchJson(api('zenz', '/webzone/playstore', { query: text }, 'apikey'))
-            let teks = `⭔ Playstore Search From : ${text}\n\n`
-            for (let i of res.result) {
-            teks += `⭔ Name : ${i.name}\n`
-            teks += `⭔ Link : ${i.link}\n`
-            teks += `⭔ Developer : ${i.developer}\n`
-            teks += `⭔ Link Developer : ${i.link_dev}\n\n──────────────────────\n`
-            }
-            reply(teks)
-            }
-            break
-            case 'gsmarena': {
-            if (!q) return reply(`Example : ${prefix + command} samsung`)
-            reply(mess.wait)
-            let res = await fetchJson(api('zenz', '/webzone/gsmarena', { query: text }, 'apikey'))
-            let { judul, rilis, thumb, ukuran, type, storage, display, inchi, pixel, videoPixel, ram, chipset, batrai, merek_batre, detail } = res.result
-let capt = `⭔ Title: ${judul}
-⭔ Realease: ${rilis}
-⭔ Size: ${ukuran}
-⭔ Type: ${type}
-⭔ Storage: ${storage}
-⭔ Display: ${display}
-⭔ Inchi: ${inchi}
-⭔ Pixel: ${pixel}
-⭔ Video Pixel: ${videoPixel}
-⭔ Ram: ${ram}
-⭔ Chipset: ${chipset}
-⭔ Battery: ${batrai}
-⭔ Battery Brand: ${merek_batre}
-⭔ Detail: ${detail}`
-            chika.sendImage(m.chat, thumb, capt, m)
-            }
-            break
-            case 'jadwalbioskop': {
-            if (!q) return reply(`Example: ${prefix + command} jakarta`)
-            reply(mess.wait)
-            let res = await fetchJson(api('zenz', '/webzone/jadwalbioskop', { kota: text }, 'apikey'))
-            let capt = `Jadwal Bioskop From : ${text}\n\n`
-            for (let i of res.result){
-            capt += `⭔ Title: ${i.title}\n`
-            capt += `⭔ Thumbnail: ${i.thumb}\n`
-            capt += `⭔ Url: ${i.url}\n\n──────────────────────\n`
-            }
-            chika.sendImage(m.chat, res.result[0].thumb, capt, m)
-            }
-            break
-            case 'nowplayingbioskop': {
-            reply(mess.wait)
-            let res = await fetchJson(api('zenz', '/webzone/nowplayingbioskop', {}, 'apikey'))
-            let capt = `Now Playing Bioskop\n\n`
-            for (let i of res.result){
-            capt += `⭔ Title: ${i.title}\n`
-            capt += `⭔ Url: ${i.url}\n`
-            capt += `⭔ Img Url: ${i.img}\n\n──────────────────────\n`
-            }
-            chika.sendImage(m.chat, res.result[0].img, capt, m)
-            }
-            break
-            case 'aminio': {
-            if (!q) return reply(`Example: ${prefix + command} free fire`)
-            reply(mess.wait)
-            let res = await fetchJson(api('zenz', '/webzone/amino', { query: text }, 'apikey'))
-            let capt = `Amino Search From : ${text}\n\n`
-            for (let i of res.result){
-            capt += `⭔ Community: ${i.community}\n`
-            capt += `⭔ Community Link: ${i.community_link}\n`
-            capt += `⭔ Thumbnail: ${i.community_thumb}\n`
-            capt += `⭔ Description: ${i.community_desc}\n`
-            capt += `⭔ Member Count: ${i.member_count}\n\n──────────────────────\n`
-            }
-            chika.sendImage(m.chat, 'https://'+res.result[0].community_thumb, capt, m)
-            }
-            break
-            case 'wattpad': {
-            if (!q) return reply(`Example : ${prefix + command} love`)
-            reply(mess.wait)
-            let res = await fetchJson(api('zenz', '/webzone/wattpad', { query: text }, 'apikey'))
-            let { judul, dibaca, divote, bab, waktu, url, thumb, description } = res.result[0]
-            let capt = `Wattpad From query\n\n`
-            capt += `⭔ Judul: ${judul}\n`
-            capt += `⭔ Dibaca: ${dibaca}\n`
-            capt += `⭔ Divote: ${divote}\n`
-            capt += `⭔ Bab: ${bab}\n`
-            capt += `⭔ Url: ${url}\n`
-            capt += `⭔ Deskripsi: ${description}`
-            chika.sendImage(m.chat, thumb, capt, m)
-            }
-            break
-            case 'webtoons': {
-            if (!q) return reply(`Example : ${prefix + command} love`)
-            reply(mess.wait)
-            let res = await fetchJson(api('zenz', '/webzone/webtoons', { query: text }, 'apikey'))
-            let capt = `Webtoons Search From : ${text}\n\n`
-            for (let i of res.result) {
-            capt += `⭔ Judul: ${i.judul}\n`
-            capt += `⭔ Like: ${i.like}\n`
-            capt += `⭔ Creator: ${i.creator}\n`
-            capt += `⭔ Genre: ${i.genre}\n`
-            capt += `⭔ Url: ${i.url}\n\n──────────────────────\n`
-            }
-            reply(capt)
-            }
-            break
-            case 'drakor': {
-            if (!q) return reply(`Example : ${prefix + command} love`)
-            reply(mess.wait)
-            let res = await fetchJson(api('zenz', '/webzone/drakor', { query: text }, 'apikey'))
-            let capt = `Drakor Search From : ${text}\n\n`
-            for (let i of res.result) {
-            capt += `⭔ Judul: ${i.judul}\n`
-            capt += `⭔ Years: ${i.years}\n`
-            capt += `⭔ Genre: ${i.genre}\n`
-            capt += `⭔ Url: ${i.url}\n`
-            capt += `⭔ Thumbnail Url: ${i.thumbnail}\n\n──────────────────────\n`
-            }
-            chika.sendImage(m.chat, res.result[0].thumbnail, capt, m)
-            }
-            break
-// SET MENU & ALL MENU
-case "setmenu": 
-if (!isCreator) return reply(mess.owner)
-if (!text) return reply("1. image\n2. gif\n3. list\n\nContoh .setmenu image")
-// Image
-if (q == "image") {
-typemenu = 'image'
-reply("Sucses Mengganti Menu "+q)
-}
-// Gif
-else if (q == "gif") {
-typemenu = 'gif'
-reply("Sucses Mengganti Menu "+q)
-}
-// List
-if (q == "list") {
-typemenu = 'list'
-reply("Sucses Mengganti Menu "+q)
-}
-break
-case "setallmenu":
-if (!isCreator) return reply(mess.owner)
-if (!text) return reply("1. image\n2. gif\n3. catalog\n\nContoh .setallmenu image")
-// Image
-if (q == "image") {
-typemenu = 'image'
-reply("Sucses Mengganti Menu "+q)
-}
-// Gif
-else if (q == "gif") {
-typemenu = 'gif'
-reply("Sucses Mengganti Menu "+q)
-}
-// Catalog
-else if (q == "catalog") {
-typemenu = 'catalog'
-reply("Sucses Mengganti Menu "+q)
-}
-break
-case 'command': {
-await chika.sendListMenu(from, `Selamat ${salam} kak ${pushname}` , lang.list(pushname) , 'CLICK HERE', {quoted: fkontak})
-}
-break
-case 'menu': {
+case 'menu': case 'start': case 'p': case 'halo': case 'hi': case 'hallo': case 'assalamualaikum':{
+if (m.isGroup) return reply('[Menu Hanya Dapat Digunakan Diprivate Chat]')
 if(typemenu == 'image'){
-await chika.send5ButImg(from, `` + '' + lang.menu(botname, pushname, salam), `© ${ownername}`,thumb, [{"quickReplyButton": {"displayText": "Anonymous Chat💌","id": 'Anonymous'}},{"quickReplyButton": {"displayText": "List Menu📒","id": 'command'}}] )
-}
-if(typemenu == 'gif'){
-await chika.send5ButGif(from, `` + '' + lang.menu(botname, pushname, salam), `© ${ownername}`,velochika, [{"quickReplyButton": {"displayText": "Anonymous Chat💌","id": 'Anonymous'}},{"quickReplyButton": {"displayText": "List Menu📒","id": 'command'}}] )
-}
-if(typemenu == 'list'){
-await chika.sendListMenu(from, `Selamat ${salam} kak ${pushname}` , lang.list(pushname) , 'CLICK HERE', {quoted: fkontak})
+await chika.send5ButImg(from, `` + '' + lang.menu(botname, pushname, salam), `© ${ownername}`,thumb, [{"quickReplyButton": {"displayText": "List Menu 📃","id": 'listcommand'}},{"quickReplyButton": {"displayText": "Beli Premium 🌟","id": 'kemerdekaan'}},{"quickReplyButton": {"displayText": "Help & Bantuan ⁉️","id": 'helpme'}}] )
 }
 }
 break
-case 'allmenu': {
+case 'kemerdekaan': {
 if(typemenu == 'image'){
-var riych = await getBuffer(picak+'All Menu')
-await chika.send5ButImg(from, `` + '' + lang.allmenu(prefix, pushname, botname, time, salam), `  © ${ownername}`,riych, [{"urlButton": {"displayText": "YouTube Creator🤖","url": `${youtube}`}},{"urlButton": {"displayText": `Groups💬`,"url": `https://chat.whatsapp.com/KJZWBMHRy9B7Jo2uzTZvgV`}},{"quickReplyButton": {"displayText": "Donasi🥳","id": 'donate'}},{"quickReplyButton": {"displayText": "Owner👑","id": 'owner'}}] )
-}
-if(typemenu == 'gif'){
-await chika.send5ButGif(from, `` + '' + lang.allmenu(prefix, pushname, botname, time, salam), `  © ${ownername}`,velochika, [{"urlButton": {"displayText": "YouTube Creator","url": `${youtube}`}},{"urlButton": {"displayText": `Rest Api's`,"url": `${myweb}`}},{"quickReplyButton": {"displayText": "Donasi","id": 'donate'}},{"quickReplyButton": {"displayText": "Owner","id": 'owner'}}] )
-}
-if(typemenu == 'catalog'){
-await chika.sendCatalog(from, 'ALL MENU', lang.allmenu(prefix, pushname, botname, time, salam), thumb, {quoted: ftroli})
+await chika.send5ButImg(from, `` + '' + lang.indonesia(botname, pushname, salam), `© ${ownername}`,agustus, [{"urlButton": {"displayText": "Spesial Kemerdekaan 🇮🇩","url": `${bisnis}`}}] )
 }
 }
 break
-case 'groupmenu':
-var riych = await getBuffer(picak+'Group Menu')
-await chika.send5ButImg(from, `` + '' + lang.groupmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
+case 'premrose': {
+if(typemenu == 'image'){
+await chika.send5ButImg(from, `` + '' + lang.roseprem(botname, pushname, salam), `© ${ownername}`,discount, [{"urlButton": {"displayText": "Beli Sekarang 💰","url": `${bisnis}`}},{"urlButton": {"displayText": "Uji Coba Gratis 🆓","url": `${free}`}}] )
+}
+}
 break
-case 'downloadermenu':
-var riych = await getBuffer(picak+'Downloader Menu')
-await chika.send5ButImg(from, `` + '' + lang.downloadermenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
+case 'listcommand': {
+if(typemenu == 'image'){
+await chika.send5ButImg(from, `` + '' + lang.listcmd(botname, pushname, salam), `© ${ownername}`,rosejpg, [{"quickReplyButton": {"displayText": "Back List 🔙","id": 'menu'}}] )
+}
+}
 break
-case 'searchmenu':
-var riych = await getBuffer(picak+'Search Menu')
-await chika.send5ButImg(from, `` + '' + lang.searchmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'telestickmenu':
-var riych = await getBuffer(picak+'Telegram Sticker Menu')
-await chika.send5ButImg(from, `` + '' + lang.telestickmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'randommenu':
-var riych = await getBuffer(picak+'Random Menu')
-await chika.send5ButImg(from, `` + '' + lang.randommenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'randomanimemenu':
-var riych = await getBuffer(picak+'Random Anime Menu')
-await chika.send5ButImg(from, `` + '' + lang.randomanimemenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'searchmenu':
-var riych = await getBuffer(picak+'Search Menu')
-await chika.send5ButImg(from, `` + '' + lang.searchmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'textpromenu':
-var riych = await getBuffer(picak+'Textpro Menu')
-await chika.send5ButImg(from, `` + '' + lang.textpromenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'photooxymenu':
-var riych = await getBuffer(picak+'Photo Oxy Menu')
-await chika.send5ButImg(from, `` + '' + lang.photooxymenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'ephotomenu':
-var riych = await getBuffer(picak+'Ephoto Menu')
-await chika.send5ButImg(from, `` + '' + lang.ephotomenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'funmenu':
-var riych = await getBuffer(picak+'Fun Menu')
-await chika.send5ButImg(from, `` + '' + lang.funmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'primbonmenu':
-var riych = await getBuffer(picak+'Primbon Menu')
-await chika.send5ButImg(from, `` + '' + lang.primbonmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'cerpenmenu':
-var riych = await getBuffer(picak+'Cerpen Menu')
-await chika.send5ButImg(from, `` + '' + lang.cerpenmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'convertmenu':
-var riych = await getBuffer(picak+'Converter Menu')
-await chika.send5ButImg(from, `` + '' + lang.convertmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'informationmenu':
-var riych = await getBuffer(picak+'Information Menu')
-await chika.send5ButImg(from, `` + '' + lang.informationmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'mainmenu':
-var riych = await getBuffer(picak+'Main Menu')
-await chika.send5ButImg(from, `` + '' + lang.mainmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'databasemenu':
-var riych = await getBuffer(picak+'Database Menu')
-await chika.send5ButImg(from, `` + '' + lang.groupmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'anonymousmenu':
-var riych = await getBuffer(picak+'Anonymous Menu')
-await chika.send5ButImg(from, `` + '' + lang.anonymousmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'islamicmenu':
-var riych = await getBuffer(picak+'Islamic Menu')
-await chika.send5ButImg(from, `` + '' + lang.islamicmenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'voicechargermenu':
-var riych = await getBuffer(picak+'Voice Charger Menu')
-await chika.send5ButImg(from, `` + '' + lang.voicechargermenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'ownermenu':
-var riych = await getBuffer(picak+'Owner Menu')
-await chika.send5ButImg(from, `` + '' + lang.ownermenu(prefix), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'donasi': case 'donate':
-var riych = await getBuffer(picak+'Donasi')
-await chika.send5ButImg(from, `` + '' + lang.donasi(ownernomer), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Owner🌹","id": 'owner'}},{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
-break
-case 'thanksto': case 'tqto':
-var riych = await getBuffer(picak+'Contributors')
-await chika.send5ButImg(from, `` + '' + lang.thanksto(), `  © ${ownername}`,riych, [{"quickReplyButton": {"displayText": "Back List↩️","id": 'command'}}] )
+case 'helpme': {
+if(typemenu == 'image'){
+await chika.send5ButImg(from, `` + '' + lang.helpme(botname, pushname, salam), `© ${ownername}`,rosejpg, [{"urlButton": {"displayText": "Tutorial Video 🎥","url": `${tiktok}`}},{"urlButton": {"displayText": "Instagram 🐸","url": `${ig}`}},{"urlButton": {"displayText": "CS Live Chat 🎧","url": `${cslive}`}}] )
+}
+}
 break
              default:
                 if (budy.startsWith('=>')) {
